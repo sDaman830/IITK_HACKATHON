@@ -5,9 +5,10 @@ const { create } = require("ipfs-http-client");
 const crypto = require("crypto");
 
 const app = express();
-const web3 = new Web3("https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID");
+const web3 = new Web3(
+  "https://mainnet.infura.io/v3/5ff45606ee714bf6adcc5811a31b3699"
+);
 
-// Initialize IPFS client
 const ipfs = create({ url: "https://ipfs.infura.io:5001/api/v0" });
 
 // Middleware
@@ -25,7 +26,7 @@ app.post("/api/did", async (req, res) => {
   try {
     // Generate a unique DID (can be more sophisticated)
     const did = `did:example:${crypto.randomBytes(16).toString("hex")}`;
-    const userAddress = req.body.address;
+    const userAddress = "0xA0C8fED4B2D559cFFA2Bd193b8b5A964F3A35349";
 
     // Create a DID Document (example structure)
     const didDocument = {

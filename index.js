@@ -8,6 +8,7 @@ const app = express();
 const web3 = new Web3(
   "https://mainnet.infura.io/v3/5ff45606ee714bf6adcc5811a31b3699"
 );
+const { create } = require("ipfs-http-client");
 
 const ipfs = create({ url: "https://ipfs.infura.io:5001/api/v0" });
 

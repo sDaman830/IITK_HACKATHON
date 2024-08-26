@@ -33,6 +33,6 @@ This project is a decentralized identity management system that leverages Decent
 
 ## PPT and Video
 
-### Presentation PPT: Link to the PowerPoint presentation.
+### Presentation PPT: https://www.canva.com/design/DAGO4_pQPzE/fXKkDOVPEod6GxpfZ2kGZA/edit?utm_content=DAGO4_pQPzE&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
 
-### Demo Video: Link to the demonstration video of the project.
+### Demo Video: https://www.loom.com/share/5101c3887ead4dd9b4b5da3d10a1a096?sid=57f6ee00-bfe7-41b9-a5f7-401a9f9fcb11

@@ -4,6 +4,13 @@ import Web3 from "web3";
 import crypto from "crypto";
 import { createHelia } from "helia";
 import { json } from "@helia/json";
+import cors from "cors";
+import { ethers } from "ethers";
+import fs from "fs-extra";
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Initialize Helia and the JSON module
 const helia = await createHelia({
@@ -14,39 +21,156 @@ const helia = await createHelia({
     },
   },
 });
+
 const j = json(helia);
 
 // Initialize Web3 with your Ethereum provider
 const web3 = new Web3("https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID");
 
 // Replace with your actual contract ABI and address
-const contractABI = [
-  // ABI of DIDRegistry contract
+const abi = [
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "string",
+        name: "did",
+        type: "string",
+      },
+      {
+        indexed: false,
+        internalType: "bool",
+        name: "success",
+        type: "bool",
+      },
+    ],
+    name: "SignInAttempt",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "string",
+        name: "did",
+        type: "string",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "key",
+        type: "string",
+      },
+    ],
+    name: "UserAdded",
+    type: "event",
+  },
   {
     inputs: [
-      { internalType: "string", name: "did", type: "string" },
-      { internalType: "string", name: "cid", type: "string" },
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
     ],
-    name: "addDID",
+    name: "DiDToCidMapping",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+    ],
+    name: "DiDToKey",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+    ],
+    name: "DiDToUrlMapping",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "string",
+        name: "_did",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "_link",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "_key",
+        type: "string",
+      },
+    ],
+    name: "addUser",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
-    inputs: [{ internalType: "string", name: "did", type: "string" }],
-    name: "resolveDID",
-    outputs: [{ internalType: "string", name: "", type: "string" }],
-    stateMutability: "view",
+    inputs: [
+      {
+        internalType: "string",
+        name: "_did",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "_key",
+        type: "string",
+      },
+    ],
+    name: "signIn",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
 ];
 
-// const contractAddress = "YOUR_CONTRACT_ADDRESS"; // Address of the deployed DIDRegistry contract
-// const contract = new web3.eth.Contract(contractABI, contractAddress);
-
-// Express app setup
 const app = express();
 app.use(bodyParser.json());
+
+app.use(cors("*"));
 
 // Route to create a DID
 app.post("/api/did", async (req, res) => {
@@ -57,11 +181,10 @@ app.post("/api/did", async (req, res) => {
       return res.status(400).json({ error: "Link is required" });
     }
 
-    const did = `did:example:${crypto.randomBytes(16).toString("hex")}`;
+    const did = `did:ethr:${crypto.randomBytes(16).toString("hex")}`;
     console.log("DID:", did);
     const privateKey = crypto.randomBytes(32).toString("hex");
     console.log("private key :", privateKey);
-    const userAddress = "0xA0C8fED4B2D559cFFA2Bd193b8b5A964F3A35349"; // Replace with actual user address
 
     const didDocument = {
       "@context": "https://www.w3.org/ns/did/v1",
@@ -80,7 +203,6 @@ app.post("/api/did", async (req, res) => {
           publicKey: `${did}#keys-1`,
         },
       ],
-      // Include the link in the DID document
       link: link,
     };
 
@@ -91,22 +213,29 @@ app.post("/api/did", async (req, res) => {
     const retrievedDidDocument = await j.get(cid);
     console.log("Retrieved DID Document:", retrievedDidDocument);
 
-    // Save DID and private key (consider how you manage private keys securely)
-    // await contract.methods
-    //   .addDID(did, cid.toString())
-    //   .send({ from: userAddress });
+    // const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    // const contractAddress = "0x518E52835cb57398f2D5232297c55b721Ff655Ef"; // Replace with your
+    // const contract = new ethers.Contract(contractAddress, abi, provider);
 
-    // Send DID and private key in the response (be cautious about exposing private keys)
+    // const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+
+    // const contractWithSigner = contract.connect(wallet);
+
+    // const res = await contractWithSigner.addUser(did, link, privateKey);
+
+    // const value = await contractWithSigner.on("UserAdded", (did, key) => {
+    //   console.log("YEAAHHH");
+    //   res.status(200);
+    // });
     res.json({ message: "DID created successfully", did, privateKey });
   } catch (error) {
     console.error("Error creating DID:", error);
-    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Route to resolve a DID
 app.get("/api/did/:id", async (req, res) => {
-  const did = req.params.id;
+
 
   try {
     // const cid = await contract.methods.resolveDID(did).call();
@@ -189,4 +318,4 @@ app.post("/api/verify", async (req, res) => {
 });
 
 // Server setup
-app.listen(3000, () => console.log("Server running on port 3000"));
+app.listen(3001, () => console.log("Server running on port 3000"));

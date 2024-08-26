@@ -8,164 +8,24 @@ import cors from "cors";
 import { ethers } from "ethers";
 import fs from "fs-extra";
 import dotenv from "dotenv";
+import { ContractAbi } from "./lib";
 
-// Load environment variables from .env file
 dotenv.config();
 
-// Initialize Helia and the JSON module
 const helia = await createHelia({
-  repo: "./ipfs-repo", // Path to IPFS repo if needed
+  repo: "./ipfs-repo",
   libp2p: {
     transportManager: {
-      listen: ["/ip4/127.0.0.1/tcp/5001"], // Ensure correct transport settings
+      listen: ["/ip4/127.0.0.1/tcp/5001"],
     },
   },
 });
 
 const j = json(helia);
 
-// Initialize Web3 with your Ethereum provider
-const web3 = new Web3("https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID");
+const web3 = new Web3(env.process.WEB3_URL);
 
-// Replace with your actual contract ABI and address
-const abi = [
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "string",
-        name: "did",
-        type: "string",
-      },
-      {
-        indexed: false,
-        internalType: "bool",
-        name: "success",
-        type: "bool",
-      },
-    ],
-    name: "SignInAttempt",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "string",
-        name: "did",
-        type: "string",
-      },
-      {
-        indexed: false,
-        internalType: "string",
-        name: "key",
-        type: "string",
-      },
-    ],
-    name: "UserAdded",
-    type: "event",
-  },
-  {
-    inputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    name: "DiDToCidMapping",
-    outputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    name: "DiDToKey",
-    outputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    name: "DiDToUrlMapping",
-    outputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "string",
-        name: "_did",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "_link",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "_key",
-        type: "string",
-      },
-    ],
-    name: "addUser",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "string",
-        name: "_did",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "_key",
-        type: "string",
-      },
-    ],
-    name: "signIn",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-];
+const abi = ContractAbi;
 
 const app = express();
 app.use(bodyParser.json());
@@ -208,25 +68,25 @@ app.post("/api/did", async (req, res) => {
 
     // Add the DID Document to IPFS using Helia's JSON module
     const cid = await j.add(didDocument);
-    console.log("Stored CID:", cid.toString());
+  
 
     const retrievedDidDocument = await j.get(cid);
-    console.log("Retrieved DID Document:", retrievedDidDocument);
+  
 
-    // const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-    // const contractAddress = "0x518E52835cb57398f2D5232297c55b721Ff655Ef"; // Replace with your
-    // const contract = new ethers.Contract(contractAddress, abi, provider);
+    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const contractAddress = process.env.CONTRACT_ADDRESS;
+    const contract = new ethers.Contract(contractAddress, abi, provider);
 
-    // const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-    // const contractWithSigner = contract.connect(wallet);
+    const contractWithSigner = contract.connect(wallet);
 
-    // const res = await contractWithSigner.addUser(did, link, privateKey);
+    const res = await contractWithSigner.addUser(did, link, privateKey);
 
-    // const value = await contractWithSigner.on("UserAdded", (did, key) => {
-    //   console.log("YEAAHHH");
-    //   res.status(200);
-    // });
+    const value = await contractWithSigner.on("UserAdded", (did, key) => {
+      res.status(200, json.toString({ did, key }));
+    });
+
     res.json({ message: "DID created successfully", did, privateKey });
   } catch (error) {
     console.error("Error creating DID:", error);
@@ -235,33 +95,26 @@ app.post("/api/did", async (req, res) => {
 
 // Route to resolve a DID
 app.get("/api/did/:id", async (req, res) => {
-
-
   try {
-    // const cid = await contract.methods.resolveDID(did).call();
-    // const cid = "baguqeerasords4njcts6vs7qvdjfcvgnume4hqohf65zsfguprqphs3icwea";
+    const cid = await contract.methods.resolveDID(did).call();
 
-    // if (!cid) {
-    //   return res.status(404).json({ error: "DID not found" });
-    // }
+    if (!cid) {
+      return res.status(404).json({ error: "DID not found" });
+    }
 
-    // // Retrieve the DID Document from IPFS using Helia's JSON module
-    // const didDocument = await j.get(
-    //   "bagaaieraqubcyf64hkinf42rwaydvgeb2dlmkt32qwvq76yn4xmkvh3apjgq"
-    // );
-    // console.log("DID DOC", didDocument);
+    // Retrieve the DID Document from IPFS using Helia's JSON module
+    const didDocument = await j.get(cid);
 
-    // if (!didDocument || !didDocument.publicKey) {
-    //   return res
-    //     .status(404)
-    //     .json({ error: "DID Document or public key not found" });
-    // }
+    if (!didDocument || !didDocument.publicKey) {
+      return res
+        .status(404)
+        .json({ error: "DID Document or public key not found" });
+    }
 
-    // Generate a nonce (random challenge)
+    // Generate a nonce 
     const nonce = crypto.randomBytes(16).toString("hex");
 
-    // Extract the public key
-    // const publicKey = didDocument.publicKey[0].publicKeyBase58; // Assuming the first key is the one used
+    const publicKey = didDocument.publicKey[0].publicKeyBase58;
 
     res.json({ nonce });
   } catch (error) {

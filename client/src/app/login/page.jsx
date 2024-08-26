@@ -43,12 +43,17 @@ export default function Page() {
   async function handlePrivateKeyClick() {
     try {
       setLoading(true);
+
+      const res = await axios.post(`http://localhost:3001/api/sign`, {
+        privateKey,
+      });
+      const verifyRes = await axios.post(`http://localhost:3001/api/verify`, {
+        signedMessage,
+        publicKey,
+        nonce,
+      });
+      setResponse(verifyRes.data.message);
       router.push("/succuss");
-      // Replace this with the appropriate endpoint or logic for private key handling
-      //   const res = await axios.post(`http://localhost:3001/api/privateKey`, {
-      //     privateKey,
-      //   });
-      //   setResponse(res.data.message); // Assuming response contains a message
     } catch (error) {
       console.error("Error handling private key:", error);
       setResponse("Error handling private key");

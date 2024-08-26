@@ -31,8 +31,6 @@ This project is a decentralized identity management system that leverages Decent
 - IPFS Daemon or IPFS HTTP API
 - Next.js
 
-### Installation
-
 ## PPT and Video
 
 ### Presentation PPT: Link to the PowerPoint presentation.
